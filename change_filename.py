@@ -1,0 +1,6 @@
+import os 
+
+# change mutiple file names
+# ###-###.png -> 1.npg ... 
+
+path = ... 
