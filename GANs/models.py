@@ -320,7 +320,7 @@ class GAN:
         self.discriminator.save(os.path.join(run_folder, 'discriminator.h5'))
         self.generator.save(os.path.join(run_folder, 'generator.h5'))
 
-        pkl.dump(self.open(os.path.join(run_folder, 'obj.pkl'), 'wb'))
+        pkl.dump(self, open(os.path.join(run_folder, 'obj.pkl'), 'wb'))
 
     def load_weights(self, filepath):
         self.model.load_weights(filepath)
