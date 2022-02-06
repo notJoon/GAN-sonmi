@@ -4,8 +4,10 @@
 
 ### TODO
 # 1. add some parser
+# 2. colored text for warning(red) or finished(green)
 
-import os 
+import os
+from typing import List 
 import cv2 
 import argparse
 import numpy as np
@@ -27,7 +29,7 @@ parser_path = args['image']
 
 
 ## set file path
-filepath = r'~/test pic'
+filepath = r'/Users/notjoon/GAN_project/GAN-sonmi/test pic'
 
 ## input files are must have these foramt
 ALLOW_EXTS = {'.jpg', '.jpeg', '.png'}
@@ -65,21 +67,21 @@ def check_valid_extention(filename):
         pass
 
 
-def cvt_images(path, width: int=80, height: int=80):
+def cvt_and_resize_imgs(path, width: int=64, height: int=64) -> None:
     ## apply gray scale and adjust image size 
     ## expected image dim: width x height x 1 
     counter = 0
     
+    ## https://towardsdatascience.com/loading-custom-image-dataset-for-deep-learning-models-part-1-d64fa7aaeca6
 
     for img in os.listdir(path):
         filename = os.path.join(path, img)
-        
+
         check_valid_extention(filename)
-        check_empty_foler(path)
 
         _img = cv2.imread(filename)
         _img = cv2.cvtColor(_img, cv2.COLOR_BGR2GRAY)
-        _img = cv2.resize(_img, (width, height))
+        _img = cv2.resize(_img, (width, height), interpolation=cv2.INTER_AREA)
 
         cv2.imwrite(f'train/{counter}.jpeg', _img)
 
@@ -90,4 +92,5 @@ def cvt_images(path, width: int=80, height: int=80):
 
 if __name__ == '__main__':
     make_cvt_dir('train')
-    cvt_images(filepath)
+    check_empty_foler(filepath)
+    cvt_and_resize_imgs(filepath)
