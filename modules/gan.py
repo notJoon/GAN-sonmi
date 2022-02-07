@@ -1,11 +1,11 @@
 ## Implement multiple GAN models.
 
-## TODO
-### GAN
-### WGAN
+#   TODO 
+#     1. add some comments
+#
+#   FIXME
+#     2. Debuging
 
-# ref:
-## https://keras.io/examples/generative/dcgan_overriding_train_step/
 
 # paper:
 ## GAN - https://arxiv.org/pdf/1701.07875.pdf 
@@ -15,7 +15,6 @@ import pickle as pkl
 import tensorflow
 from tensorflow import keras 
 from tensorflow.keras import Model
-from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import (Input, Dense, Conv2D, UpSampling2D, Conv2DTranspose, Activation, 
                                             BatchNormalization, LeakyReLU, Flatten, Dropout, Reshape)
 from tensorflow.keras.initializers import RandomNormal
@@ -23,12 +22,50 @@ from tensorflow.keras.optimizers import Adam, RMSprop
 import numpy as np 
 import matplotlib.pyplot as plt 
 
-## create a dataset from a folder, and rescale the images to [0, 1] range 
-dataset = keras.preprocessing.image_dataset_from_directory(...)
-dataset = dataset.map(lambda x: x / 255.0)
 
 
 class GAN:
+    """ Architectue
+
+        ### GAN ###
+        
+        | real(x) | ───────────────────────────────x────────────────────────> | discriminator | ──> | output(y_hat) |
+                                                   │
+                                             | fake(x_hat) |
+                                                   │
+        | noise | ──────────>| generator |─────────┘
+            |
+            V
+  //  diverse representation  //
+  //  and also NOT real image //
+
+
+        ### discriminator ###
+         * learns to distinguish real from fake
+                                                                        ┌─────────── update(theta_d) ───────────┐
+                                                                        v                                       │
+        | noise | ──> | generator | ──> | features(x_hat) | ─x─> | discriminator | ──> | output(y_hat) | ──> | cost |
+                                                             │                                                  │
+                                                             │                                                  *
+                                                        | real(x) |                                 // Binary cross-entropy  //
+                                                                                                    // with labels real/fake //
+
+        ### generator ###
+         * learns to make fakes that look real
+         * take any random noise and produce a realistic image
+
+                           ┌─────────────────────────────── update(theta_g) ───────────────────────────────────┐
+                           V                                                                                   │                                                                 
+        | noise | ──> | generator | ──> | features(x_hat) | ──> | discriminator | ──> | output(y_hat) | ──> | cost |
+                                                │
+                                                *
+                                        //  only takes   //
+                                        // fake examples //
+
+       * they learn the competition with each other                                                         
+       * the two models should always be at a similar skill level
+    
+    """
     def __init__(self, input_dim, discriminator_conv_filters: int, discriminator_conv_kernel_size: int, 
             discriminator_conv_strides: int, discriminator_batch_norm_momentum: float, discriminator_activation,
             discriminator_dropout_rate:float, discriminator_learning_rate:float,
@@ -87,6 +124,22 @@ class GAN:
 ############# DISCRIMINATOR #############
         
     def _build_discriminator(self):
+        """ EXPECTED LAYER SHAPE
+
+            discriminator_input     // input shape = (width, hieght, channels)
+                    v
+                 conv2d             ─┐
+                    V                │
+            batch_normalization      │ unit layer
+                    V                │
+                 dropout            ─┘ number of layers are controlled by 'self.n_layers_discriminator'
+                    v
+                   ...
+                    V
+                 flatten
+                    v
+                  dense             // discriminator must classify the images to real or fake. So, set the Dense layer for 1 
+        """
         discriminator_input = Input(shape=self.input_dim, name='discriminator_input')
 
         model = discriminator_input
@@ -119,6 +172,28 @@ class GAN:
 ############# GENERATOR #############
     
     def _build_generator(self):
+        """ EXPECTED LAYER SHAPE
+
+                input
+                  v
+                dense
+                  v
+          batch_normalization
+                  v
+              activation
+                  v
+               reshape
+                  v
+             upsampling2d
+                  v
+                conv2d          ─┐
+                  v              │
+          batch_normalization    │ unit layer
+                  v              │
+              activation        ─┘ number of layers are controlled by 'self.n_layers_generator'
+                  v
+                 ...
+        """
         generator_input = Input(shape=(self.z_dim, ), name='generator_input')
 
         model = generator_input
@@ -225,7 +300,7 @@ class GAN:
                 true_imgs = next(x_train)[0]
         
         else:
-            idx = np.random.ranint(0, x_train.shape[0], batch_size)
+            idx = np.random.randint(0, x_train.shape[0], batch_size)
             true_imgs = x_train[idx]
         
         noise = np.random.normal(0, 1, (batch_size, self.z_dim))
@@ -249,6 +324,9 @@ class GAN:
                 run_folder, print_every_nth_batches: int=50, using_generator: bool=False):
         
         for epoch in range(self.epoch, self.epoch + epochs):
+            ## MUST training GANs in altanating fashions
+            ## both models should improve together and should be kept at similar skill levels
+
             disc = self.train_discriminator(x_train, batch_size, using_generator)
             gen = self.train_generator(batch_size)
 
@@ -291,6 +369,13 @@ class GAN:
 
 
     def save(self, folder):
+
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+            os.makedirs(os.path.join(folder, 'weights'))
+            os.makedirs(os.path.join(folder, 'images'))
+
+
         with open(os.path.join(folder, 'params.pkl'), 'wb') as f:
             pkl.dump([
                 self.input_dim,
