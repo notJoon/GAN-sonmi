@@ -14,11 +14,11 @@ import os
 import pickle as pkl
 import tensorflow 
 
-from tensorflow import keras 
+from tensorflow import keras
 from keras import Model
 from keras.layers import (Input, Dense, Conv2D, UpSampling2D, Conv2DTranspose, Activation, 
                                             BatchNormalization, LeakyReLU, Flatten, Dropout, Reshape)
-from keras import initializers 
+from keras import initializers
 from keras import optimizers
 import numpy as np 
 import matplotlib.pyplot as plt 
@@ -248,13 +248,13 @@ class GAN:
     
     def get_optim(self, learning_rate: float):
         if self.optimizer == 'adam':
-            optim = optimizers.adam_v2(learning_rate=learning_rate, beta_1=0.5)
+            optim = optimizers.Adam(learning_rate=learning_rate)
         
         elif self.optimizer =='rmsprop':
-            optim = optimizers.rmsprop_v2(learning_rate=learning_rate)
+            optim = optimizers.RMSprop(learning_rate=learning_rate)
         
         else:
-            optim = optimizers.adam_v2(learning_rate=learning_rate)
+            optim = optimizers.Adam(learning_rate=learning_rate)
         
         return optim
     
