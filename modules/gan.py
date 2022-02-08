@@ -12,17 +12,16 @@
 
 import os 
 import pickle as pkl
-import tensorflow
+import tensorflow 
+
 from tensorflow import keras 
-from tensorflow.keras import Model
-from tensorflow.keras.layers import (Input, Dense, Conv2D, UpSampling2D, Conv2DTranspose, Activation, 
+from keras import Model
+from keras.layers import (Input, Dense, Conv2D, UpSampling2D, Conv2DTranspose, Activation, 
                                             BatchNormalization, LeakyReLU, Flatten, Dropout, Reshape)
-from tensorflow.keras.initializers import RandomNormal
-from tensorflow.keras.optimizers import Adam, RMSprop
+from keras import initializers 
+from keras import optimizers
 import numpy as np 
 import matplotlib.pyplot as plt 
-
-
 
 class GAN:
     """ Architectue
@@ -35,7 +34,7 @@ class GAN:
                                                    │
         | noise | ──────────>| generator |─────────┘
             |
-            V
+            *
   //  diverse representation  //
   //  and also NOT real image //
 
@@ -102,7 +101,7 @@ class GAN:
         self.n_layers_discriminator = len(discriminator_conv_filters)
         self.n_layers_generator = len(generator_conv_filters)
 
-        self.weight_init = RandomNormal(mean=0.0, stddev=0.02)
+        self.weight_init = initializers.random_normal(mean=0.0, stddev=0.02)
 
         self.disc_losses = []
         self.gen_losses = []
@@ -249,13 +248,13 @@ class GAN:
     
     def get_optim(self, learning_rate: float):
         if self.optimizer == 'adam':
-            optim = Adam(learning_rate=learning_rate, beta_1=0.5)
+            optim = optimizers.adam_v2(learning_rate=learning_rate, beta_1=0.5)
         
         elif self.optimizer =='rmsprop':
-            optim = RMSprop(learning_rate=learning_rate)
+            optim = optimizers.rmsprop_v2(learning_rate=learning_rate)
         
         else:
-            optim = Adam(learning_rate=learning_rate)
+            optim = optimizers.adam_v2(learning_rate=learning_rate)
         
         return optim
     
