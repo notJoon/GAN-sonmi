@@ -248,13 +248,13 @@ class GAN:
     
     def get_optim(self, learning_rate: float):
         if self.optimizer == 'adam':
-            optim = optimizers.Adam(learning_rate=learning_rate)
+            optim = optimizers.adam_v2(learning_rate=learning_rate)
         
         elif self.optimizer =='rmsprop':
-            optim = optimizers.RMSprop(learning_rate=learning_rate)
+            optim = optimizers.rmsprop_v2(learning_rate=learning_rate)
         
         else:
-            optim = optimizers.Adam(learning_rate=learning_rate)
+            optim = optimizers.adam_v2(learning_rate=learning_rate)
         
         return optim
     
