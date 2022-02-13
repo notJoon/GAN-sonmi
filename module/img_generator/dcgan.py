@@ -61,7 +61,7 @@ class DCGAN(nn.Module):
     def discriminator(self, img):
         """ receive generated imsge. then check is this looks real or not 
                 * img : generated image
-            """
+        """
 
         self.model_disc = nn.Sequential(
             nn.Linear(int(np.prod(self.img_shape)), 512),
@@ -130,6 +130,19 @@ optim_G = torch.optim.Adam(gen.parameters(), lr=0.001, betas=(0.9, 0.28))
 Tensor = torch.cuda.FloatTensor if CUDA else torch.FloatTensor
 
 ## Train
+EPOCHS = 100
+
+for epoch in tqdm(range(EPOCHS)):
+    """ """
+    # params
+
+    # generator
+
+    # discriminator 
+
+    # update loss 
+    
+
 
 ## save imgs
 
