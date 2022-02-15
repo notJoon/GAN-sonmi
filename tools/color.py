@@ -1,3 +1,7 @@
+"""
+ add color text tools for show progress and output more precisely
+"""
+
 pref = "\033["
 reset = f"{pref}0m"
 

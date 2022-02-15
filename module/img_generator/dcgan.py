@@ -30,7 +30,7 @@ os.makedirs('images', exist_ok=True)
 IMG_SIZE: int = 80
 BATCH_SIZE: int = 125
 
-os.makedirs("../../data/mnist", exist_ok=True)
+os.makedirs("/Users/not_joon/projects/GAN-sonmi/data/mnist", exist_ok=True)
 dataloader = DataLoader(datasets.MNIST(
         "../../data/mnist",
         train=True,
@@ -132,18 +132,43 @@ Tensor = torch.cuda.FloatTensor if CUDA else torch.FloatTensor
 ## Train
 EPOCHS = 100
 
-for epoch in tqdm(range(EPOCHS)):
-    """ """
-    # params
-
-    # generator
-
-    # discriminator 
-
-    # update loss 
+for epoch in range(EPOCHS):
+    for i, (imgs, _) in enumerate(dataloader):
     
+        valid = Variable(Tensor(imgs.size(0), 1).fill_(1.0), requires_grad=False)
+        fake = Variable(Tensor(imgs.size(0), 1).fill_(0.0), requires_grad=False)
 
+        real_imgs = Variable(imgs.type(Tensor))
 
-## save imgs
+        # generator
 
-## save weights
+        optim_G.zero_grad()
+
+        # input: sample noise(z)
+        latent_dim = 64
+
+        z = Variable(Tensor(np.random.normal(0, 1, (imgs.shape[0], latent_dim))))
+
+        generated_imgs = gen(z)
+        generator_loss = loss(disc(generated_imgs), valid)
+
+        generator_loss.backward()
+        optim_G.step()
+
+        # discriminator 
+        optim_D.zero_grad()
+
+        real_loss = loss(disc(real_imgs), valid)
+        fake_loss = loss(disc(generated_imgs.detach()), valid)
+
+        discriminator_loss = (real_loss + fake_loss) / 2
+
+        discriminator_loss.backward()
+        optim_D.step()
+
+        # update loss 
+        print(f'DISCRIMINATOR LOSS: {discriminator_loss}, GENERATOR LOSS: {generator_loss}')
+
+        # save img
+print('done')
+    
