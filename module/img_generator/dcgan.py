@@ -5,7 +5,7 @@
 # 1. discriminator 부분에서 오버피팅 되는거 같음
 # 2. loss 계산 안 됨  
 
-from calendar import EPOCH
+import datetime
 import os 
 import torch
 import torch.nn as nn
@@ -19,13 +19,20 @@ from torchvision.utils import save_image
 from torch.utils.data import DataLoader
 
 BATCH_SIZE = 100
-EPOCHS = 150
+EPOCHS = 1
+PATH = '/Users/not_joon/projects/GAN-sonmi/data/mnist'
+
+## for file name 
+utc_datetime = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H%MZ")
+filename = '/Users/not_joon/projects/GAN-sonmi/saved_imgs/fig_%s.png' % utc_datetime
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
+print("start downloading \n")
+
 ## Load dataset for test
 data = datasets.MNIST(
-    root = '/Users/not_joon/projects/GAN-sonmi/data/mnist',
+    root = PATH,
     train = True,
     download = True,
     transform = transforms.Compose([
@@ -33,6 +40,8 @@ data = datasets.MNIST(
         transforms.Normalize((0.5, ), (0.5, ))
     ])
 )
+
+print("Data has Loaded \n")
 
 data_loader = DataLoader(
     dataset = data,
@@ -72,6 +81,7 @@ gen_optim = optim.Adam(gen.parameters(), lr=0.002)
 total_step = len(data_loader)
 
 ## Train
+print('START TRAIN')
 for epoch in range(EPOCHS):
     for i, (images, _) in enumerate(data_loader):
         images = images.reshape(BATCH_SIZE, -1).to(DEVICE)
@@ -117,8 +127,7 @@ for epoch in range(EPOCHS):
         gen_loss.backward()
         gen_optim.step()
 
-    print(f'EPOCH: {epoch}/{EPOCHS}, disc_loss: {disc_loss.item():.4f}, \
-        gen_loss: {gen_loss.item():.4f}, SCORE: {real_score.mean().item()}')
+    print(f'EPOCH: {epoch + 1}/{EPOCHS}, disc_loss: {disc_loss.item():.3f}, gen_loss: {gen_loss.item():.3f}, SCORE: {real_score.mean().item():.3f}')
 
 
 z = torch.randn(BATCH_SIZE, 64).to(DEVICE)
@@ -127,4 +136,7 @@ fake_images = gen(z)
 for i in range(10):
     image = np.reshape(fake_images.data.cpu().numpy()[i], (28, 28))
     plt.imshow(image, cmap='gray')
+    plt.savefig(filename)
     plt.show()
+
+print('FINISHED')
