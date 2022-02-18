@@ -1,5 +1,10 @@
 ## https://github.com/yellowjs0304/3-min-pytorch_study/blob/master/09-%EA%B2%BD%EC%9F%81%ED%95%98%EB%A9%B0_%ED%95%99%EC%8A%B5%ED%95%98%EB%8A%94_GAN/gan.ipynb
 
+## TODO 터미널에 ansi 적용
+## FIXME 
+# 1. discriminator 부분에서 오버피팅 되는거 같음
+# 2. loss 계산 안 됨  
+
 from calendar import EPOCH
 import os 
 import torch
@@ -35,9 +40,7 @@ data_loader = DataLoader(
     shuffle = True
 )
 
-class Discriminator(nn.Module):
-    def __init__(self) -> None:
-        self.model = nn.Sequential(
+Discriminator = nn.Sequential(
             nn.Linear(784, 256),
             nn.LeakyReLU(0.2),
             
@@ -48,9 +51,7 @@ class Discriminator(nn.Module):
             nn.Sigmoid()
         )
 
-class Generator(nn.Module):
-    def __init__(self) -> None:
-        self.model = nn.Sequential(
+Generator = nn.Sequential(
             nn.Linear(64, 256),
             nn.ReLU(),
 
@@ -61,8 +62,8 @@ class Generator(nn.Module):
             nn.Tanh()
         )
     
-disc = Discriminator().to(DEVICE)
-gen = Generator().to(DEVICE)
+disc = Discriminator.to(DEVICE)
+gen = Generator.to(DEVICE)
 loss = nn.BCELoss()
 
 disc_optim = optim.Adam(disc.parameters(), lr=0.0002)
