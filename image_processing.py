@@ -5,6 +5,7 @@
 ### TODO
 # 1. add some parser
 # 2. colored text for warning(red) or finished(green)
+# 3. convert to numpy array and load orioginal images
 
 import os
 from typing import List 
@@ -29,7 +30,8 @@ parser_path = args['image']
 
 
 ## set file path
-filepath = r'/Users/notjoon/GAN_project/GAN-sonmi/test pic'
+filepath = r'/Users/not_joon/projects/GAN-sonmi/junk/test pic'
+savepath = r'/Users/not_joon/projects/GAN-sonmi/img_np_array'
 
 ## input files are must have these foramt
 ALLOW_EXTS = {'.jpg', '.jpeg', '.png'}
@@ -73,6 +75,7 @@ def cvt_and_resize_imgs(path, width: int=64, height: int=64) -> None:
     counter = 0
     
     ## https://towardsdatascience.com/loading-custom-image-dataset-for-deep-learning-models-part-1-d64fa7aaeca6
+    _img_to_array = []
 
     for img in os.listdir(path):
         filename = os.path.join(path, img)
@@ -83,14 +86,30 @@ def cvt_and_resize_imgs(path, width: int=64, height: int=64) -> None:
         _img = cv2.cvtColor(_img, cv2.COLOR_BGR2GRAY)
         _img = cv2.resize(_img, (width, height), interpolation=cv2.INTER_AREA)
 
-        cv2.imwrite(f'train/{counter}.jpeg', _img)
+        _img_to_array.append([_img])
+        np.save(os.path.join(savepath, 'features'), np.array(_img_to_array))
 
+        """
+        cv2.imwrite(f'train/{counter}.jpeg', _img)
         counter += 1
+        """
 
     print(f'DONE: {len(os.listdir(path))} images has been converted!')
 
+def load_npy_file(filepath: str = savepath):
+    if len(os.listdir(filepath)) <= 0:
+        print("!!! NO FILE(S) IN THE DIRECTORY")
+        
+    else:
+        _load_file = np.load(os.path.join(filepath, 'features.npy'))
+    
+    ## !! TEST 
+    plt.imshow(_load_file[0].reshape(64, 64, 1))
 
+
+    
 if __name__ == '__main__':
     make_cvt_dir('train')
     check_empty_foler(filepath)
     cvt_and_resize_imgs(filepath)
+    load_npy_file(savepath)
