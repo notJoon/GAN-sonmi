@@ -1,6 +1,9 @@
 ## https://github.com/yellowjs0304/3-min-pytorch_study/blob/master/09-%EA%B2%BD%EC%9F%81%ED%95%98%EB%A9%B0_%ED%95%99%EC%8A%B5%ED%95%98%EB%8A%94_GAN/gan.ipynb
 
-## TODO 터미널에 ansi 적용
+## TODO 
+# 1. 터미널에 ansi 적용
+# 2. 리팩토링 
+
 ## FIXME 
 # 1. discriminator 부분에서 오버피팅 되는거 같음
 # 2. loss 계산 안 됨  
@@ -12,6 +15,8 @@ import torch.nn as nn
 import torch.optim as optim 
 import matplotlib.pyplot as plt 
 import numpy as np
+
+import color 
 
 ## for test modules we will using MNIST dataset
 from torchvision import transforms, datasets
