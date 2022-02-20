@@ -137,6 +137,5 @@ for i in range(10):
     image = np.reshape(fake_images.data.cpu().numpy()[i], (28, 28))
     plt.imshow(image, cmap='gray')
     plt.savefig(filename)
-    plt.show()
 
 print('FINISHED')
