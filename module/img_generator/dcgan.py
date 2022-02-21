@@ -25,26 +25,18 @@ from torch.utils.data import DataLoader
 
 BATCH_SIZE = 100
 EPOCHS = 1
-PATH = '/Users/not_joon/projects/GAN-sonmi/data/mnist'
+PATH = f'../GAN-sonmi/data/mnist'
 
 ## for file name 
 utc_datetime = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H%MZ")
-filename = '/Users/not_joon/projects/GAN-sonmi/saved_imgs/fig_%s.png' % utc_datetime
+filename = f'../GAN-sonmi/saved_imgs/fig_%s.png' % utc_datetime
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 print("start downloading \n")
 
 ## Load dataset for test
-data = datasets.MNIST(
-    root = PATH,
-    train = True,
-    download = True,
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.5, ), (0.5, ))
-    ])
-)
+
 
 print("Data has Loaded \n")
 
@@ -54,6 +46,7 @@ data_loader = DataLoader(
     shuffle = True
 )
 
+## 추후 list append 형식으로 코드 수 줄일 것. 그리고 따로 클래스로 빼기 
 Discriminator = nn.Sequential(
             nn.Linear(784, 256),
             nn.LeakyReLU(0.2),
