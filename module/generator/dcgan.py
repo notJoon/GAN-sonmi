@@ -21,11 +21,13 @@ import color
 ## for test modules we will using MNIST dataset
 from torchvision import transforms, datasets
 from torchvision.utils import save_image
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader 
+
+from downloader import load_mnist_dataset
 
 BATCH_SIZE = 100
 EPOCHS = 1
-PATH = f'../GAN-sonmi/data/mnist'
+
 
 ## for file name 
 utc_datetime = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H%MZ")
@@ -33,12 +35,7 @@ filename = f'../GAN-sonmi/saved_imgs/fig_%s.png' % utc_datetime
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-print("start downloading \n")
-
-## Load dataset for test
-
-
-print("Data has Loaded \n")
+data = load_mnist_dataset()
 
 data_loader = DataLoader(
     dataset = data,
