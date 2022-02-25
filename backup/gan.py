@@ -122,7 +122,7 @@ class GAN:
 
 ############# DISCRIMINATOR #############
         
-    def _build_discriminator(self):
+    def build_discriminator(self):
         """ EXPECTED LAYER SHAPE
 
             discriminator_input     // input shape = (width, hieght, channels)
