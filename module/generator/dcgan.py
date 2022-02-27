@@ -16,11 +16,7 @@ import torch.optim as optim
 import matplotlib.pyplot as plt 
 import numpy as np
 
-import color 
-
 ## for test modules we will using MNIST dataset
-from torchvision import transforms, datasets
-from torchvision.utils import save_image
 from torch.utils.data import DataLoader 
 
 from downloader import load_mnist_dataset

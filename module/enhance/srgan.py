@@ -71,14 +71,14 @@ class ImageDataset(Dataset):
         # Transforms for low resolution images and high resolution images
         self.lr_transform = transforms.Compose(
             [
-                transforms.Resize((hr_height // 4, hr_height // 4), Image.BICUBIC),
+                transforms.Resize((hr_height // 4, hr_width // 4), Image.BICUBIC),
                 transforms.ToTensor(),
                 transforms.Normalize(mean, std),
             ]
         )
         self.hr_transform = transforms.Compose(
             [
-                transforms.Resize((hr_height, hr_height), Image.BICUBIC),
+                transforms.Resize((hr_height, hr_width), Image.BICUBIC),
                 transforms.ToTensor(),
                 transforms.Normalize(mean, std),
             ]
@@ -130,7 +130,7 @@ class FeatureExtractor(nn.Module):
 
 
 class ResidualBlock(nn.Module):
-    def __init__(self, in_features:int , kernel_size:int = 3, stride:int = 1, padding:int = 1):
+    def __init__(self, in_features:int , kernel_size:int = 3, stride:int = 1, padding=1):
         super(ResidualBlock, self).__init__()
 
         self.residual_block = nn.Sequential(
@@ -156,7 +156,7 @@ class Discriminator(nn.Module):
 
         self.out_shape = (1, patch_height, patch_width)
 
-        def discriminator_block(in_filters: int, out_filters: int, first_block: bool = False) -> list:
+        def discriminator_block(in_filters: int, out_filters: int, first_block=False) -> list:
             layers = []
             layers.append(nn.Conv2d(in_filters, out_filters, kernel_size=3, stride=1, pading=1))
 
