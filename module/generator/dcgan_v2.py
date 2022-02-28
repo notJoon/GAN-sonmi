@@ -57,19 +57,19 @@ class DCGenerator(nn.Module):
         for i, output in enumerate([512, 256, 128, 64]):
             layers.extend(dc_generator_block(
                 self,
-                in_filters=input,
-                out_filters=output,
-                first_block=(i == 0)
+                in_filters = input,
+                out_filters = output,
+                first_block = (i == 0)
             ))
 
             input = output
 
         layers.append(nn.ConvTranspose2d(
-            in_channels=input,
-            out_channels=self.generator_channels,
-            kernel_size=self.kernel_size,
-            stride=2,
-            padding=1
+            in_channels = input,
+            out_channels = self.generator_channels,
+            kernel_size = self.kernel_size,
+            stride = 2,
+            padding = 1
         ))
         layers.append(nn.Tanh())
 
