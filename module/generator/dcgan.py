@@ -19,7 +19,6 @@ import numpy as np
 ## for test modules we will using MNIST dataset
 from torch.utils.data import DataLoader 
 
-from downloader import load_mnist_dataset
 
 BATCH_SIZE = 100
 EPOCHS = 1
@@ -31,7 +30,7 @@ filename = f'../GAN-sonmi/saved_imgs/fig_%s.png' % utc_datetime
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-data = load_mnist_dataset()
+data = ...
 
 data_loader = DataLoader(
     dataset = data,

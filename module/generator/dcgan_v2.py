@@ -1,32 +1,84 @@
 import argparse
+from typing import Any
 
+import numpy as np 
 import torch
 import torch.nn as nn
 import torch.optim as optim
 
+## TODO finishing train model 
 
 ## some parsers for control hyperparam
 parser = argparse.ArgumentParser()
 parser.add_argument('--epochs', type=int, default=150, help="number of epochs of training")
 parser.add_argument('--dropout_rate', type=float, default=0.5, help="set droput rate")
 parser.add_argument('--leakyrelu_rate', type=float, default=0.2, help="set LeakyReLU learning rate")
-parser.add_argument('--z', type=int, default=100, help='generator\'s input noise')
+parser.add_argument('--z_dim', type=int, default=100, help='generator\'s input noise')
 option = parser.parse_args()
 
 print(option)
 
+""" Architectue
+
+    ### GAN ###
+
+        | real(x) | ───────────────────────────────x────────────────────────> | discriminator | ──> | output(y_hat) |
+                                                   │
+                                             | fake(x_hat) |
+                                                   │
+        | noise | ──────────>| generator |─────────┘
+            |
+            *
+  //  diverse representation  //
+  //  and also NOT real image //
+
+
+    ### discriminator ###
+         * learns to distinguish real from fake
+                                                                        ┌─────────── update(theta_d) ───────────┐
+                                                                        v                                       │
+        | noise | ──> | generator | ──> | features(x_hat) | ─x─> | discriminator | ──> | output(y_hat) | ──> | cost |
+                                                             │                                                  │
+                                                             │                                                  *
+                                                        | real(x) |                                 // Binary cross-entropy  //
+                                                                                                    // with labels real/fake //
+
+        ### generator ###
+         * learns to make fakes that look real
+         * take any random noise and produce a realistic image
+
+                           ┌─────────────────────────────── update(theta_g) ───────────────────────────────────┐
+                           V                                                                                   │                                                                 
+        | noise | ──> | generator | ──> | features(x_hat) | ──> | discriminator | ──> | output(y_hat) | ──> | cost |
+                                                │
+                                                *
+                                        //  only takes   //
+                                        // fake examples //
+
+       * they learn the competition with each other                                                         
+       * the two models should always be at a similar skill level
+
+"""
+def weights_init(m):
+    classname = m.__class__.__name__
+    if classname.find('Conv') != -1:
+        nn.init.normal_(m.weight.data, 0.0, 0.02)
+    elif classname.find('BatchNorm') != -1:
+        nn.init.normal_(m.weight.data, 1.0, 0.02)
+        nn.init.constant_(m.bias.data, 0)
 
 class DCGenerator(nn.Module):
 
     def __init__(self, generator_channels=3, conv_trans_strides=1, 
-                generator_filters=64, kernel_size=4, conv_trans_paddings=0, z=100) -> None:
+                generator_filters=64, kernel_size=4, conv_trans_paddings=0, z_dim=100) -> None:
         super(DCGenerator, self).__init__()
+
         self.generator_channels = generator_channels
         self.conv_trans_strides = conv_trans_strides
         self.generator_filters = generator_filters
         self.kernel_size = kernel_size
         self.conv_trans_paddings = conv_trans_paddings
-        self.z = z 
+        self.z_dim = z_dim 
 
 
 
@@ -52,7 +104,7 @@ class DCGenerator(nn.Module):
 
         ### generate layers ###
         layers = []
-        input = self.z
+        input = self.z_dim
 
         for i, output in enumerate([512, 256, 128, 64]):
             layers.extend(dc_generator_block(
@@ -77,7 +129,7 @@ class DCGenerator(nn.Module):
 
         print(self.models)
 
-    def forward(self, input) -> any:
+    def forward(self, input: Any) -> Any:
         output = self.models(input)
         return output
 
@@ -138,17 +190,11 @@ class DCDiscriminator(nn.Module):
         self.models = nn.Sequential(*layers)
         print(self.models)
 
+def train_discriminator(batch_size: int, z_dim: int = 100):
+    valid = np.ones((batch_size, 1))
+    fake = np.zeros((batch_size, 1))
+
+
 ### RUN TEST ### 
-
-def main() -> any:
-    EPOCHS: int = option.epochs
-    IMG_SIZE: int = 64 
-    BATCH_SIZE: int = 64
-
-    DCGenerator()
-    DCDiscriminator()
-
-
-
 if __name__ == "__main__":
-    main()
+    ...

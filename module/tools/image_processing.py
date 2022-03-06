@@ -107,6 +107,9 @@ def load_npy_file(filepath: str = savepath):
     plt.imshow(_load_file[0].reshape(64, 64, 1))
 
 
+def __len__(filepath:str = savepath) -> int:
+    return len(filepath)
+
     
 if __name__ == '__main__':
     make_cvt_dir('train')
