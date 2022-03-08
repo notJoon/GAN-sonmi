@@ -14,24 +14,9 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt 
 
-"""parser desc. 
-
-parser = argparse.ArgumentParser(description='Converting image(s)')
-parser.add_argument(
-                '-i', '--image',
-                required=True,
-                help='add target folder'
-            )
-args = vars(parser.parse_args())
-
-parser_path = args['image']
-
-"""
-
-
 ## set file path
-filepath = r'/Users/not_joon/projects/GAN-sonmi/junk/test pic'
-savepath = r'/Users/not_joon/projects/GAN-sonmi/img_np_array'
+filepath = r'../junk/test pic'
+savepath = r'../img_np_array'
 
 ## input files are must have these foramt
 ALLOW_EXTS = {'.jpg', '.jpeg', '.png'}
@@ -109,10 +94,3 @@ def load_npy_file(filepath: str = savepath):
 
 def __len__(filepath:str = savepath) -> int:
     return len(filepath)
-
-    
-if __name__ == '__main__':
-    make_cvt_dir('train')
-    check_empty_foler(filepath)
-    cvt_and_resize_imgs(filepath)
-    load_npy_file(savepath)

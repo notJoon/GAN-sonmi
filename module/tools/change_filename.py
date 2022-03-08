@@ -10,7 +10,7 @@ p.rename(p.with_suffix('.aln'))
 
 import os 
 
-path = r'~/scrambled_file_name'
+path = r'../scrambled_file_name'
 files = os.listdir(path)
 
 for idx, file in enumerate(files):

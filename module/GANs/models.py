@@ -1,12 +1,8 @@
 import argparse
 from typing import Any
 
-import numpy as np 
 import torch
 import torch.nn as nn
-import torch.optim as optim
-
-## TODO finishing train model 
 
 ## some parsers for control hyperparam
 parser = argparse.ArgumentParser()
@@ -59,19 +55,12 @@ print(option)
        * the two models should always be at a similar skill level
 
 """
-def weights_init(m):
-    classname = m.__class__.__name__
-    if classname.find('Conv') != -1:
-        nn.init.normal_(m.weight.data, 0.0, 0.02)
-    elif classname.find('BatchNorm') != -1:
-        nn.init.normal_(m.weight.data, 1.0, 0.02)
-        nn.init.constant_(m.bias.data, 0)
 
-class DCGenerator(nn.Module):
+class Generator(nn.Module):
 
     def __init__(self, generator_channels=3, conv_trans_strides=1, 
                 generator_filters=64, kernel_size=4, conv_trans_paddings=0, z_dim=100) -> None:
-        super(DCGenerator, self).__init__()
+        super(Generator, self).__init__()
 
         self.generator_channels = generator_channels
         self.conv_trans_strides = conv_trans_strides
@@ -82,7 +71,7 @@ class DCGenerator(nn.Module):
 
 
 
-        def dc_generator_block(
+        def generator_block(
             self, in_filters: int, 
             out_filters: int, 
             first_block = False) -> list:
@@ -107,7 +96,7 @@ class DCGenerator(nn.Module):
         input = self.z_dim
 
         for i, output in enumerate([512, 256, 128, 64]):
-            layers.extend(dc_generator_block(
+            layers.extend(generator_block(
                 self,
                 in_filters = input,
                 out_filters = output,
@@ -129,20 +118,19 @@ class DCGenerator(nn.Module):
 
         print(self.models)
 
-    def forward(self, input: Any) -> Any:
-        output = self.models(input)
-        return output
+    def forward(self, x):
+        return self.models(x)
 
 
 
-class DCDiscriminator(nn.Module):
+class Discriminator(nn.Module):
 
     def __init__(
         self, discriminator_channels=3, 
         discriminator_kernels=4, discriminator_strides=2, 
         discriminator_paddings=1) -> None:
 
-        super(DCDiscriminator, self).__init__()
+        super(Discriminator, self).__init__()
         self.discriminator_channels = discriminator_channels
         self.discriminator_kernels = discriminator_kernels
         self.discriminator_strides = discriminator_strides
@@ -150,7 +138,7 @@ class DCDiscriminator(nn.Module):
         self.leaky_relu_rate = option.leakyrelu_rate
         self.dropout_rate = option.dropout_rate
 
-        def dc_discriminator_block(self, in_filters: int, out_filters: int) -> list:
+        def discriminator_block(self, in_filters: int, out_filters: int) -> list:
             layers = []
             layers.append(nn.Conv2d(
                 in_channels = in_filters, 
@@ -180,7 +168,7 @@ class DCDiscriminator(nn.Module):
         
         input = CONV_INPUT
         for _, output in enumerate([64, 128, 256, 512]):
-            layers.extend(dc_discriminator_block(
+            layers.extend(discriminator_block(
                 self, 
                 in_filters = input,
                 out_filters = output))
@@ -189,12 +177,7 @@ class DCDiscriminator(nn.Module):
         
         self.models = nn.Sequential(*layers)
         print(self.models)
-
-def train_discriminator(batch_size: int, z_dim: int = 100):
-    valid = np.ones((batch_size, 1))
-    fake = np.zeros((batch_size, 1))
-
-
-### RUN TEST ### 
-if __name__ == "__main__":
-    ...
+    
+    def forward(self, x):
+        output = self.models(x)
+        return output.squeeze()
