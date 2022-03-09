@@ -2,29 +2,21 @@
 # Finish the SRGAN 
 
 import numpy as np
-import pandas as pd
-import os, math, sys
-import glob, itertools, argparse, random
+import os
+import glob, random
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-from torchvision.models import vgg19
 import torchvision.transforms as transforms 
-from torchvision import datasets
 from torch.utils.data import DataLoader, Dataset
 from torchvision.utils import save_image, make_grid
+from layers import FeatureExtractor, ResidualBlock
 
-"""
-import plotly
-import plotly.express as px
-import plotly.graph_objects as go
-"""
 import matplotlib.pyplot as plt
 
 from PIL import Image
-from tqdm import tqdm_notebook as tqdm
 from sklearn.model_selection import train_test_split
 
 random.seed(42)
@@ -115,35 +107,6 @@ test_dataloader = DataLoader(
         #num_workers = n_cpu
     )
 
-
-
-
-class FeatureExtractor(nn.Module):
-    def __init__(self):
-        super(FeatureExtractor, self).__init__()
-
-        vgg19_model = vgg19(pretrained=True)
-
-        self.feature_extractor = nn.Sequential(
-            *list(vgg19_model.features.children())[:18]
-        )
-
-
-class ResidualBlock(nn.Module):
-    def __init__(self, in_features:int , kernel_size:int = 3, stride:int = 1, padding=1):
-        super(ResidualBlock, self).__init__()
-
-        self.residual_block = nn.Sequential(
-            nn.Conv2d(in_features, in_features, kernel_size, stride, padding),
-            nn.BatchNorm2d(in_features, 0.8),
-            nn.PReLU(),
-
-            nn.Conv2d(in_features, in_features, kernel_size, stride, padding),
-            nn.BatchNorm2d(in_features, 0.8),
-        )
-    
-    def forward(self, x):
-        return x + self.residual_block(x)
 
 class Discriminator(nn.Module):
     def __init__(self, input_shape: int):
