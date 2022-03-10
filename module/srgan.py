@@ -201,7 +201,6 @@ class GeneratorResNet(nn.Module):
         out = torch.add(out1, out2)
 
         out = self.upsampling(out)
-
+        
         out = self.conv3(out)
-
         return out 

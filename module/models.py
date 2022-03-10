@@ -185,7 +185,7 @@ class WGDiscriminator(nn.Module):
         conv_paddings: int = 1, leaky_rate: float = 0.2, dim: int = 32) -> None:
         super(WGDiscriminator, self).__init__()
         
-        self.conv_channels = 1 
+        self.input = 1 
         self.conv_kernel_size = conv_kernel_size
         self.conv_strides = conv_strides
         self.conv_paddings = conv_paddings
@@ -210,25 +210,31 @@ class WGDiscriminator(nn.Module):
         ]) 
         """
 
-    def discriminator_block(self, in_filters: int, out_filters: int, first_block: bool = False) -> list:
-        layers = []
+        def discriminator_block(self, in_filters: int, out_filters: int, first_block: bool = False) -> list:
+            layers = []
+            layers.append(nn.Conv2d(
+                in_channels = in_filters,
+                out_channels = out_filters,
+                kernel_size = self.conv_kernel_size,
+                stride = self.conv_strides,
+                padding = self.conv_paddings
+            ))
 
-        layers.append(nn.Conv2d(
-            in_channels = in_filters,
-            out_channels = out_filters,
-            kernel_size = self.conv_kernel_size,
-            stride = self.conv_strides,
-            padding = self.conv_paddings
-        ))
+            if first_block:
+                layers.append(nn.InstanceNorm2d(out_filters))
+            else:
+                layers.append(nn.InstanceNorm2d(out_filters * 2))
+            
+            layers.append(nn.LeakyReLU(self.leaky_rate))
 
-        if first_block:
-            layers.append(nn.InstanceNorm2d(out_filters))
-        else:
-            layers.append(nn.InstanceNorm2d(out_filters * 2))
-        
-        layers.append(nn.LeakyReLU(self.leaky_rate))
+            return layers
+    
+        input = self.input 
 
-        return layers
+        for i, output in enumerate([]):
+            ... 
+
+        output = input 
 
     def forward(self, x):
         return self.model(x).squeeze()
