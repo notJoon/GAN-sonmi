@@ -55,7 +55,7 @@ print(option)
        * the two models should always be at a similar skill level
 
 """
-
+### DCGAN Layer ###
 class Generator(nn.Module):
 
     def __init__(self, generator_channels=3, conv_trans_strides=1, 
@@ -79,10 +79,6 @@ class Generator(nn.Module):
 
             layers.append(nn.ConvTranspose2d(
                 in_channels=in_filters,
-                out_channels=out_filters,
-                kernel_size=self.kernel_size,
-                stride=self.conv_trans_strides,
-                padding=self.conv_trans_paddings
             ))
 
             layers.append(nn.BatchNorm2d(self.generator_filters))
@@ -135,8 +131,8 @@ class Discriminator(nn.Module):
         self.discriminator_kernels = discriminator_kernels
         self.discriminator_strides = discriminator_strides
         self.discriminator_paddings = discriminator_paddings
-        self.leaky_relu_rate = option.leakyrelu_rate
-        self.dropout_rate = option.dropout_rate
+        self.leaky_relu_rate = 0.2
+        self.dropout_rate = 0.5
 
         def discriminator_block(self, in_filters: int, out_filters: int) -> list:
             layers = []
@@ -181,3 +177,62 @@ class Discriminator(nn.Module):
     def forward(self, x):
         output = self.models(x)
         return output.squeeze()
+
+### WGAN-GP Layer ###
+class WGDiscriminator(nn.Module):
+    def __init__(
+        self, conv_kernel_size: int = 4, conv_strides: int = 2, 
+        conv_paddings: int = 1, leaky_rate: float = 0.2, dim: int = 32) -> None:
+        super(WGDiscriminator, self).__init__()
+        
+        self.conv_channels = 1 
+        self.conv_kernel_size = conv_kernel_size
+        self.conv_strides = conv_strides
+        self.conv_paddings = conv_paddings
+        self.leaky_rate = leaky_rate
+        self.dim = dim
+
+        """ WGAN-GP layer example 
+        self.model = nn.Sequential([
+            nn.Conv2d(1, out, 4, 2, 1),
+            nn.InstanceNorm2d(out),
+            nn.LeakyReLU(self.leaky_rate),
+
+            nn.Conv2d(out, out*2, 4, 2, 1),
+            nn.InstanceNorm2d(out*2),
+            nn.LeakyReLU(self.leaky_rate),
+
+            nn.Conv2d(out*2, out*4, 4, 2, 1),
+            nn.InstanceNorm2d(out*4),
+            nn.LeakyReLU(self.leaky_rate),
+
+            nn.Conv2d(out * 4, 1, 4, 1, 0),
+        ]) 
+        """
+
+    def discriminator_block(self, in_filters: int, out_filters: int, first_block: bool = False) -> list:
+        layers = []
+
+        layers.append(nn.Conv2d(
+            in_channels = in_filters,
+            out_channels = out_filters,
+            kernel_size = self.conv_kernel_size,
+            stride = self.conv_strides,
+            padding = self.conv_paddings
+        ))
+
+        if first_block:
+            layers.append(nn.InstanceNorm2d(out_filters))
+        else:
+            layers.append(nn.InstanceNorm2d(out_filters * 2))
+        
+        layers.append(nn.LeakyReLU(self.leaky_rate))
+
+        return layers
+
+    def forward(self, x):
+        return self.model(x).squeeze()
+
+
+##TODO Gradient-penalty 
+##TODO write discriminator_block's test codes and improve 
