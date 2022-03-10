@@ -193,24 +193,24 @@ class WGDiscriminator(nn.Module):
         self.dim = dim
 
         """ WGAN-GP layer example 
-        self.model = nn.Sequential([
-            nn.Conv2d(1, out, 4, 2, 1),
-            nn.InstanceNorm2d(out),
-            nn.LeakyReLU(self.leaky_rate),
-
-            nn.Conv2d(out, out*2, 4, 2, 1),
-            nn.InstanceNorm2d(out*2),
-            nn.LeakyReLU(self.leaky_rate),
-
-            nn.Conv2d(out*2, out*4, 4, 2, 1),
-            nn.InstanceNorm2d(out*4),
-            nn.LeakyReLU(self.leaky_rate),
-
-            nn.Conv2d(out * 4, 1, 4, 1, 0),
-        ]) 
+        Sequential(
+            (0): Conv2d(1, 32, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            (1): InstanceNorm2d(32, eps=1e-05, momentum=0.1, affine=False, track_running_stats=False)
+            (2): LeakyReLU(negative_slope=0.2)
+            (3): Conv2d(32, 64, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            (4): InstanceNorm2d(64, eps=1e-05, momentum=0.1, affine=False, track_running_stats=False)
+            (5): LeakyReLU(negative_slope=0.2)
+            (6): Conv2d(64, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            (7): InstanceNorm2d(128, eps=1e-05, momentum=0.1, affine=False, track_running_stats=False)
+            (8): LeakyReLU(negative_slope=0.2)
+            (9): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+            (10): InstanceNorm2d(256, eps=1e-05, momentum=0.1, affine=False, track_running_stats=False)
+            (11): LeakyReLU(negative_slope=0.2)
+            (12): Conv2d(256, 1, kernel_size=(4, 4), stride=(1, 1))
+            )
         """
 
-        def discriminator_block(self, in_filters: int, out_filters: int, first_block: bool = False) -> list:
+        def discriminator_block(self, in_filters: int, out_filters: int, first_block: bool = False) -> None:
             layers = []
             layers.append(nn.Conv2d(
                 in_channels = in_filters,
@@ -223,22 +223,35 @@ class WGDiscriminator(nn.Module):
             if first_block:
                 layers.append(nn.InstanceNorm2d(out_filters))
             else:
-                layers.append(nn.InstanceNorm2d(out_filters * 2))
+                layers.append(nn.InstanceNorm2d(in_filters * 2))
             
             layers.append(nn.LeakyReLU(self.leaky_rate))
 
             return layers
-    
-        input = self.input 
 
-        for i, output in enumerate([]):
-            ... 
+        layers = []
+        in_filters = self.input
 
-        output = input 
+        for i, out_filters in enumerate([32, 64, 128, 256]):
+            layers.extend(discriminator_block(
+                self,
+                in_filters = in_filters,
+                out_filters = out_filters,
+                first_block = (i==0),
+            ))
+
+            in_filters = out_filters
+
+        layers.append(nn.Conv2d(
+                out_filters, 
+                out_channels = 1,
+                kernel_size = 4,
+                stride = 1,
+                padding = 0
+            ))
+        
+        self.models = nn.Sequential(*layers)
+        print(self.models)
 
     def forward(self, x):
         return self.model(x).squeeze()
-
-
-##TODO Gradient-penalty 
-##TODO write discriminator_block's test codes and improve 
