@@ -111,7 +111,6 @@ class Generator(nn.Module):
         return self.models(x)
 
 
-##TODO 하드코딩 된거 수정하기 
 class Discriminator(nn.Module):
     """ DCGAN Discriminator layer"""
     def __init__(self, img_channels=1, dim=8) -> None:
