@@ -1,5 +1,5 @@
+from typing import Union
 import torch
-import torch.nn as nn 
 import numpy as np
 
 ##TODO implementing gradient penalty and other wgan-gp modules 
@@ -27,3 +27,27 @@ def gradient_penalty(gradient) -> torch.Tensor:
 
     penalty = torch.mean((gradient_norm-1) ** 2)
     return penalty 
+
+
+def kl_divergence(p: Union[list, float], q: Union[list, float]) -> float:
+    """calcualte Kullbeck-Leibler divergence
+
+    Args:
+        p (list | float): distribution P 
+        q (list | float): distribution Q
+    """
+    return np.sum(p[i] * np.log2(p[i]/q[i]) for i in range(len(p)))
+
+
+def js_divergence(p: Union[list, float], q: Union[list, float]) -> float:
+    """calculate Jenson-Shannon divergence
+
+    Args:
+        p (list | float): distribution P 
+        q (list | float): distribution Q
+    
+     * m : mixture distribution
+    """
+    m = 0.5 * np.sum(p, q)
+    
+    return 0.5 * np.sum(kl_divergence(p, m), kl_divergence(q, m))
