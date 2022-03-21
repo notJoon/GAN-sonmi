@@ -8,13 +8,15 @@ from torch.utils.data import DataLoader
 CELEBA_PATH = f'../data/celebA'
 MNIST_PATH = f'../data/mnist'
 EMNIST_PATH = f'../data/emnist'
-CIFAR10_PATH = f'../data/cifar10'
+CIFAR10_PATH = f'../dataset/cifar10'
 
 
-TRANSFORM = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, ), (0.5, ))
-        ])
+def transform():
+    TRANSFORM = transforms.Compose([
+        transforms.Resize(64),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, ), (0.5, ))
+    ])
 
 ## `torchvision.datasets.CeleA` have some BadZipFile error
 def load_celeba_dataset(path: str = CELEBA_PATH) -> any:
@@ -22,7 +24,7 @@ def load_celeba_dataset(path: str = CELEBA_PATH) -> any:
         root = path,
         split = 'train',
         download = True, 
-        transform = TRANSFORM
+        transform = transform()
     )
 
     return celeba
@@ -32,7 +34,7 @@ def load_cifar_dataset(path: str = CIFAR10_PATH) -> any:
         root = path,
         train = True,
         download = True,
-        transform = TRANSFORM
+        transform = transform()
     )
 
     return cifar 
@@ -43,7 +45,7 @@ def load_emnist_dataset(path: str = EMNIST_PATH) -> any:
         root = path,
         train = True,
         download = True,
-        transform = TRANSFORM
+        transform = transform()
     )
 
     return emnist 
@@ -55,7 +57,7 @@ def load_mnist_dataset(path: str = MNIST_PATH):
         root = path,
         train = True,
         download = True,
-        transform = TRANSFORM
+        transform = transform()
     )
 
     return mnist

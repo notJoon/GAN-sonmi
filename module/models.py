@@ -4,12 +4,6 @@ from typing import Any
 import torch
 import torch.nn as nn
 
-## some parsers for control hyperparam
-parser = argparse.ArgumentParser()
-parser.add_argument('--epochs', type=int, default=150, help="number of epochs of training")
-parser.add_argument('--z_dim', type=int, default=100, help='generator\'s input noise')
-option = parser.parse_args()
-
 """ Architectue
 
     ### GAN ###
@@ -54,7 +48,7 @@ option = parser.parse_args()
 ### DCGAN Layer ###
 class Generator(nn.Module):
     """ DCGAN Generator layer"""
-    def __init__(self, img_channels=1, dim=8, z_dim=100) -> None:
+    def __init__(self, dim: int, img_channels: int, z_dim=100) -> None:
         super(Generator, self).__init__()
         
         assert img_channels >= 1, f"img_channel must be 1(greyscale) or 3(RGB). got={img_channels}"
@@ -64,7 +58,9 @@ class Generator(nn.Module):
         self.channels = img_channels
         self.z_dim = z_dim 
 
-        def generator_block(self, in_filters:int, out_filters:int, first_block:bool) -> list:
+
+        
+        def build_generator_block(self, in_filters:int, out_filters:int, first_block:bool) -> list:
 
             layers = []
             layers.append(nn.ConvTranspose2d(
@@ -86,7 +82,7 @@ class Generator(nn.Module):
         in_filters = self.z_dim
 
         for i, out_filters in enumerate([dim*8, dim*4, dim*2, dim]):
-            layers.extend(generator_block(
+            layers.extend(build_generator_block(
                 self,
                 in_filters = in_filters,
                 out_filters = out_filters,
@@ -112,15 +108,15 @@ class Generator(nn.Module):
 
 
 class Discriminator(nn.Module):
-    """ DCGAN Discriminator layer"""
-    def __init__(self, img_channels=1, dim=8) -> None:
+    def __init__(self, dim: int, img_channels: int) -> None:
         super(Discriminator, self).__init__()
 
+        assert dim > 0, f'dim size must greater than 0. got={dim}'
         assert img_channels >= 1, f"img_channel size must be 1(greyscale) or 3(RGB). got={img_channels}"
 
         self.channels = img_channels
 
-        def discriminator_block(self, in_filters: int, out_filters: int) -> list:
+        def build_discriminator_block(self, in_filters: int, out_filters: int) -> list:
             layers = []
             layers.append(nn.Conv2d(
                 in_channels = in_filters, 
@@ -137,7 +133,7 @@ class Discriminator(nn.Module):
             return layers
 
         # discriminator layers
-        filters: int = 64
+        filters: int = 64       # img_size
 
         layers = []
         layers.append(nn.Conv2d(
@@ -149,8 +145,8 @@ class Discriminator(nn.Module):
         layers.append(nn.Sigmoid())
         
         input = filters
-        for _, output in enumerate([dim, dim*2, dim*4, dim*8]):
-            layers.extend(discriminator_block(
+        for _, output in enumerate([dim*2, dim*4, dim*8]):
+            layers.extend(build_discriminator_block(
                 self, 
                 in_filters = input,
                 out_filters = output
@@ -162,7 +158,7 @@ class Discriminator(nn.Module):
             in_channels = output,
             out_channels = 1,
             kernel_size = 4,
-            stride = 1,
+            stride = 2,
             padding = 0
         ))
         layers.append(nn.Sigmoid())
@@ -172,7 +168,9 @@ class Discriminator(nn.Module):
     
     def forward(self, x):
         output = self.models(x)
+        print(x.size())
         return output.squeeze()
+
 
 
 
@@ -180,16 +178,15 @@ class Discriminator(nn.Module):
 class WGDiscriminator(nn.Module):
     """ WGAN-GP Discriminator layer """
 
-    def __init__(self, img_channels=1, dim=32) -> None:
+    def __init__(self, dim: int, img_channels: int) -> None:
         super(WGDiscriminator, self).__init__()
 
         assert img_channels >= 1, f"img_channel size must be 1(greyscale) or 3(RGB). got={img_channels}"
-        assert dim >= 1, f"dim size cannot be zero or negative. the minimum recommend value is 32, got={dim}"
+        assert dim >= 1, f"dim size cannot be zero or negative. the minimum recommend value is 8, got={dim}"
 
         self.img_channels = img_channels
 
-        def discriminator_block(self, in_filters:int, out_filters:int, 
-                                first_block:bool=False) -> None:
+        def build_discriminator_block(self, in_filters: int, out_filters: int, first_block: bool) -> None:
 
             assert in_filters > 0, f"in_filters must greater than zero, got={in_filters}"
             assert out_filters > 0, f"out_filters must greater than zero, got={out_filters}"
@@ -216,7 +213,7 @@ class WGDiscriminator(nn.Module):
         in_filters = self.img_channels
 
         for i, out_filters in enumerate([dim, dim*2, dim*4, dim*8]):
-            layers.extend(discriminator_block(
+            layers.extend(build_discriminator_block(
                 self,
                 in_filters = in_filters,
                 out_filters = out_filters,
@@ -245,3 +242,7 @@ def initialize_weights(model):
     for m in model.modules():
         if isinstance(m, (nn.Conv2d, nn.ConvTranspose2d, nn.BatchNorm2d)):
             nn.init.normal_(m.weight.data, 0.0, 0.02)
+
+## TEST
+if __name__ == "__main__":
+    Discriminator(dim=64, img_channels=1)
