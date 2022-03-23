@@ -1,7 +1,6 @@
 import torch.nn as nn 
 from torchvision.models import vgg19
 
-
 class FeatureExtractor(nn.Module):
     def __init__(self):
         super(FeatureExtractor, self).__init__()

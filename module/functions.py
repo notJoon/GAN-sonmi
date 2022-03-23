@@ -1,53 +1,24 @@
 from typing import Union
 import torch
-import numpy as np
 
-##TODO implementing gradient penalty and other wgan-gp modules 
+def gradient_penalty(critic, real, fake, device='cpu'):
+    BATCH_SIZE, CHANNELS, HEIGHT, WIDTH = real.shape 
+    epsilon = torch.rand((BATCH_SIZE, 1, 1, 1)).repeat(1, CHANNELS, HEIGHT, WIDTH).to(device)
+    interpolted_images = real * epsilon + fake * (1- epsilon)
 
-def get_gradient():
-    ... 
+    ## calculate critic scores 
+    mixed_scores = critic(interpolted_images)
 
-def gradient_penalty(gradient) -> torch.Tensor:
-    '''
-    Return the gradient penalty, given a gradient.
-    Given a batch of image gradients, you calculate the magnitude of each image's gradient
-    and penalize the mean quadratic distance of each magnitude to 1.
-    
-    Parameters:
-        * gradient: the gradient of the critic's scores, with respect to the mixed image
-    Returns:
-        * penalty: the gradient penalty
-    '''
+    gradient = torch.autograd.grad(
+        input=interpolted_images,
+        outputs=mixed_scores,
+        grad_outputs=torch.ones_like(mixed_scores),
+        create_graph=True,
+        retain_graph=True
+    )[0]
 
-    ## flatten the gradients -> each rows captures one image 
-    gradient = gradient.view(len(gradient), -1)
-
-    ## calculate L2-norm (Euclidean distance)
+    gradient = gradient.view(gradient.shape[0], -1)
     gradient_norm = gradient.norm(2, dim=1)
+    gradient_penalty = torch.mean((gradient_norm - 1)**2)
 
-    penalty = torch.mean((gradient_norm-1) ** 2)
-    return penalty 
-
-
-def kl_divergence(p: Union[list, float], q: Union[list, float]) -> float:
-    """calcualte Kullbeck-Leibler divergence
-
-    Args:
-        p (list | float): distribution P 
-        q (list | float): distribution Q
-    """
-    return np.sum(p[i] * np.log2(p[i]/q[i]) for i in range(len(p)))
-
-
-def js_divergence(p: Union[list, float], q: Union[list, float]) -> float:
-    """calculate Jenson-Shannon divergence
-
-    Args:
-        p (list | float): distribution P 
-        q (list | float): distribution Q
-    
-     * m : mixture distribution
-    """
-    m = 0.5 * np.sum(p, q)
-    
-    return 0.5 * np.sum(kl_divergence(p, m), kl_divergence(q, m))
+    return gradient_penalty
