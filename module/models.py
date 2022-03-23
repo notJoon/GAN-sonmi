@@ -3,6 +3,7 @@ from typing import Any
 
 import torch
 import torch.nn as nn
+from layers import ResidualBlock
 
 """ Architectue
 
@@ -60,7 +61,7 @@ class Generator(nn.Module):
 
 
         
-        def build_generator_block(self, in_filters:int, out_filters:int, first_block:bool) -> list:
+        def _build_generator_block(self, in_filters:int, out_filters:int, first_block:bool) -> list:
 
             layers = []
             layers.append(nn.ConvTranspose2d(
@@ -82,7 +83,7 @@ class Generator(nn.Module):
         in_filters = self.z_dim
 
         for i, out_filters in enumerate([dim*8, dim*4, dim*2, dim]):
-            layers.extend(build_generator_block(
+            layers.extend(_build_generator_block(
                 self,
                 in_filters = in_filters,
                 out_filters = out_filters,
@@ -101,7 +102,7 @@ class Generator(nn.Module):
 
         self.models = nn.Sequential(*layers)
 
-        print(self.models)
+        # print(self.models)
 
     def forward(self, x):
         return self.models(x)
@@ -116,7 +117,7 @@ class Discriminator(nn.Module):
 
         self.channels = img_channels
 
-        def build_discriminator_block(self, in_filters: int, out_filters: int) -> list:
+        def _build_discriminator_block(self, in_filters: int, out_filters: int) -> list:
             layers = []
             layers.append(nn.Conv2d(
                 in_channels = in_filters, 
@@ -146,7 +147,7 @@ class Discriminator(nn.Module):
         
         input = filters
         for _, output in enumerate([dim*2, dim*4, dim*8]):
-            layers.extend(build_discriminator_block(
+            layers.extend(_build_discriminator_block(
                 self, 
                 in_filters = input,
                 out_filters = output
@@ -164,29 +165,32 @@ class Discriminator(nn.Module):
         layers.append(nn.Sigmoid())
 
         self.models = nn.Sequential(*layers)
-        print(self.models)
+        #print(self.models)
     
     def forward(self, x):
         output = self.models(x)
-        print(x.size())
         return output.squeeze()
-
+#####################################
 
 
 
 ### WGAN-GP Layer ###
-class WGDiscriminator(nn.Module):
+class Critic(nn.Module):
     """ WGAN-GP Discriminator layer """
 
     def __init__(self, dim: int, img_channels: int) -> None:
-        super(WGDiscriminator, self).__init__()
+        super(Critic, self).__init__()
 
         assert img_channels >= 1, f"img_channel size must be 1(greyscale) or 3(RGB). got={img_channels}"
         assert dim >= 1, f"dim size cannot be zero or negative. the minimum recommend value is 8, got={dim}"
 
         self.img_channels = img_channels
 
-        def build_discriminator_block(self, in_filters: int, out_filters: int, first_block: bool) -> None:
+        def _build_discriminator_block(
+            self, 
+            in_filters: int, 
+            out_filters: int, 
+            first_block: bool) -> None:
 
             assert in_filters > 0, f"in_filters must greater than zero, got={in_filters}"
             assert out_filters > 0, f"out_filters must greater than zero, got={out_filters}"
@@ -201,9 +205,9 @@ class WGDiscriminator(nn.Module):
             ))
 
             if first_block:
-                layers.append(nn.InstanceNorm2d(out_filters))
+                layers.append(nn.InstanceNorm2d(out_filters, affine=True))
             else:
-                layers.append(nn.InstanceNorm2d(in_filters*2))
+                layers.append(nn.InstanceNorm2d(in_filters*2, affine=True))
             
             layers.append(nn.LeakyReLU(0.2))
 
@@ -213,7 +217,7 @@ class WGDiscriminator(nn.Module):
         in_filters = self.img_channels
 
         for i, out_filters in enumerate([dim, dim*2, dim*4, dim*8]):
-            layers.extend(build_discriminator_block(
+            layers.extend(_build_discriminator_block(
                 self,
                 in_filters = in_filters,
                 out_filters = out_filters,
@@ -232,10 +236,111 @@ class WGDiscriminator(nn.Module):
         
         self.models = nn.Sequential(*layers)
         
-        print(self.models)
+        #print(self.models)
 
     def forward(self, x):
         return self.model(x).squeeze()
+########################################
+
+
+
+
+## SRGAN 
+class SRDiscriminator(nn.Module):
+    def __init__(self, input_shape: int):
+        super(SRDiscriminator, self).__init__()
+
+        self.input_shape = input_shape
+
+        in_channels, in_height, in_width = self.input_shape
+        patch_height, patch_width = int(in_height / 2 ** 4), int(in_width / 2 ** 4)
+
+        self.out_shape = (1, patch_height, patch_width)
+
+        def _discriminator_block(in_filters: int, out_filters: int, first_block=False) -> list:
+            layers = []
+            layers.append(nn.Conv2d(in_filters, out_filters, kernel_size=3, stride=1, pading=1))
+
+            if not first_block:
+                layers.append(nn.BatchNorm2d(out_filters))
+            
+            layers.append(nn.LeakyReLU(0.2, inplace=True))
+
+            layers.append(nn.Conv2d(out_filters, out_filters, kernel_size=3, stride=2, padding=1))
+            layers.append(nn.BatchNorm2d(out_filters))
+            layers.append(nn.LeakyReLU(0.2, inplace=True))
+
+            return layers
+        
+        layers = []
+        in_filters = in_channels
+
+        for i, out_filters in enumerate([64, 128, 256, 512]):
+            layers.extend(_discriminator_block(in_filters, out_filters, firtst_block=(i == 0)))
+
+            in_filters = out_filters
+        
+        layers.append(nn.Conv2d(out_filters, 1, kernel_size=3, stride=1, padding=1))
+
+        self.model = nn.Sequential(*layers)
+
+    def forward(self, img):
+        return self.model(img)
+
+        
+class GeneratorResNet(nn.Module):
+    def __init__(self, in_channels: int = 3, out_channels: int = 3, n_resnet_blocks: int = 16):
+        super(GeneratorResNet, self).__init__()
+        
+        ### Layer 1 ###
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(in_channels, 64, kernel_size=9, stride=1, padding=4),
+            nn.PReLU()
+        )
+
+        ## ResNet Block ## 
+        res_blocks = []
+
+        for _ in range(n_resnet_blocks):
+            res_blocks.append(ResidualBlock(64))
+        
+        self.res_blocks = nn.Sequential(*res_blocks)
+
+        ### Layer 2, post residual blocks ###
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(64, 0.8)
+        )
+
+        ## Upsampling
+        upsampling = []
+
+        for out_features in range(2):
+            upsampling += [
+                nn.Conv2d(64, 256, 3, 1, 1),
+                nn.BatchNorm2d(256),
+                nn.PixelShuffle(upscale_factor=2),
+                nn.PReLU()
+            ]
+        
+        self.upsampling = nn.Sequential(*upsampling)
+
+        ### output
+        self.conv3 = nn.Sequential(
+            nn.Conv2d(64, out_channels, kernel_size=9, stride=1, padding=4),
+            nn.Tanh()
+        )
+
+    def forward(self, x):
+        out1 = self.conv1(x)
+        out = self.res_blocks(out1)
+
+        out2 = self.conv2(out)
+        out = torch.add(out1, out2)
+
+        out = self.upsampling(out)
+        out = self.conv3(out)
+        return out 
 
 
 def initialize_weights(model):
@@ -245,4 +350,4 @@ def initialize_weights(model):
 
 ## TEST
 if __name__ == "__main__":
-    Discriminator(dim=64, img_channels=1)
+    Critic(dim=64, img_channels=1)
