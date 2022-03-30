@@ -5,6 +5,8 @@ import torch
 import torch.nn as nn
 from layers import ResidualBlock
 
+#TODO implementing Conditional GAN 
+
 """ Architectue
 
     ### GAN ###
@@ -130,7 +132,6 @@ class Discriminator(nn.Module):
             layers.append(nn.BatchNorm2d(out_filters))
             layers.append(nn.LeakyReLU(0.2, inplace=True))
             layers.append(nn.Dropout(0.5))
-
             return layers
 
         # discriminator layers
@@ -171,6 +172,148 @@ class Discriminator(nn.Module):
         output = self.models(x)
         return output.squeeze()
 #####################################
+
+
+
+class ConditionalGenerator(nn.Module):    
+    def __init__(
+        self, 
+        dim: int, 
+        num_class: int,
+        img_size: int,
+        embed_size: int,
+        img_channels: int, 
+        z_dim=100) -> None:
+
+        super(ConditionalGenerator, self).__init__()
+        assert img_channels >= 1, f"img_channel must be 1(greyscale) or 3(RGB). got={img_channels}"
+        assert dim >= 1, f"dim size cannot be zero or negative. the minimum recommend value is 8, got={dim}"
+        assert z_dim >= 100, f"z_dim must greater or equal than 100. got={z_dim}"
+
+        self.img_size = img_size
+        self.channels = img_channels
+        self.z_dim = z_dim 
+
+
+        def _build_generator_block(self, in_filters:int, out_filters:int, first_block:bool) -> list:
+
+            layers = []
+            layers.append(nn.ConvTranspose2d(
+                in_channels = in_filters,
+                out_channels = out_filters,
+                kernel_size = 4,
+                stride = 1 if first_block else 2,
+                padding = 0 if first_block else 1
+            ))
+
+            layers.append(nn.BatchNorm2d(out_filters))
+            layers.append(nn.ReLU())
+            layers.append(nn.Dropout())
+
+            return layers
+
+        ### generate layers ###
+        layers = []
+        in_filters = self.z_dim+embed_size
+
+        for i, out_filters in enumerate([dim*8, dim*4, dim*2, dim]):
+            layers.extend(_build_generator_block(
+                self,
+                in_filters = in_filters,
+                out_filters = out_filters,
+                first_block = (i==0)
+            ))
+            in_filters = out_filters
+
+        layers.append(nn.ConvTranspose2d(
+            in_channels = in_filters,
+            out_channels = self.channels,
+            kernel_size = 4,
+            stride = 2,
+            padding = 1
+        ))
+        layers.append(nn.Tanh())
+
+        self.models = nn.Sequential(*layers)
+        self.embedding = nn.Embedding(num_class, img_size)
+
+        # print(self.models)
+
+    def forward(self, x, labels):
+        ## latent vector: N x noise_dim x 1 x1
+        embedding = self.embedding(labels).unsqueeze(2).unsqueeze(3)
+        x = torch.cat([x, embedding], dim=1)
+        return self.models(x)
+
+class ConditionalDiscriminator(nn.Module):
+    def __init__(
+        self, 
+        dim: int, 
+        img_channels: int, 
+        num_classes: int, 
+        img_size: int) -> None:
+        super(ConditionalDiscriminator, self).__init__()
+
+        assert dim > 0, f'dim size must greater than 0. got={dim}'
+        assert img_channels >= 1, f"img_channel size must be 1(greyscale) or 3(RGB). got={img_channels}"
+
+        self.channels = img_channels
+        self.img_size = img_size
+
+        def _build_discriminator_block(self, in_filters: int, out_filters: int) -> list:
+            layers = []
+            layers.append(nn.Conv2d(
+                in_channels = in_filters, 
+                out_channels = out_filters, 
+                kernel_size = 4, 
+                stride = 2, 
+                padding = 1, 
+                bias = False))
+
+            layers.append(nn.BatchNorm2d(out_filters))
+            layers.append(nn.LeakyReLU(0.2, inplace=True))
+            layers.append(nn.Dropout(0.5))
+            return layers
+
+        # discriminator layers
+        filters: int = 64       # img_size
+
+        layers = []
+        layers.append(nn.Conv2d(
+            in_channels = self.channels+1, 
+            out_channels = filters,
+            kernel_size = 4,
+            stride = 2,
+            padding = 1))
+        layers.append(nn.LeakyReLU(0.2))
+        
+        input = filters
+        for _, output in enumerate([dim*2, dim*4, dim*8]):
+            layers.extend(_build_discriminator_block(
+                self, 
+                in_filters = input,
+                out_filters = output
+            ))
+            
+            input = output
+
+        layers.append(nn.Conv2d(
+            in_channels = output,
+            out_channels = 1,
+            kernel_size = 4,
+            stride = 2,
+            padding = 0
+        ))
+        layers.append(nn.Sigmoid())
+
+        self.models = nn.Sequential(*layers)
+        self.embedding = nn.Embedding(num_classes, img_size*img_size)
+        #print(self.models)
+    
+    def forward(self, x, labels):
+        embedding = self.embedding(labels).view(labels.shape[0], 1, self.img_size, self.img_size)
+        x = torch.cat([x, embedding], dim=1) # N x C x img_size(H) x img_size(W)
+        return self.models(x)
 
 
 
@@ -289,7 +432,11 @@ class SRDiscriminator(nn.Module):
 
         
 class GeneratorResNet(nn.Module):
-    def __init__(self, in_channels: int = 3, out_channels: int = 3, n_resnet_blocks: int = 16):
+    def __init__(
+        self, 
+        in_channels=3, 
+        out_channels=3, 
+        n_resnet_blocks=16) -> None:
         super(GeneratorResNet, self).__init__()
         
         ### Layer 1 ###

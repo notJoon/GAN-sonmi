@@ -1,13 +1,16 @@
 from typing import Union
 import torch
 
-def gradient_penalty(critic, real, fake, device='cpu'):
+def gradient_penalty(critic, labels, real, fake, device='cpu', mode='wgan'):
     BATCH_SIZE, CHANNELS, HEIGHT, WIDTH = real.shape 
     epsilon = torch.rand((BATCH_SIZE, 1, 1, 1)).repeat(1, CHANNELS, HEIGHT, WIDTH).to(device)
     interpolted_images = real * epsilon + fake * (1- epsilon)
 
     ## calculate critic scores 
-    mixed_scores = critic(interpolted_images)
+    if mode == 'wgan':
+        mixed_scores = critic(interpolted_images)
+    if mode == 'conditional':
+        mixed_scores = critic(interpolted_images, labels)
 
     gradient = torch.autograd.grad(
         input=interpolted_images,
