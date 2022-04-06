@@ -4,16 +4,16 @@ import torch
 def gradient_penalty(critic, labels, real, fake, device='cpu', mode='wgan'):
     BATCH_SIZE, CHANNELS, HEIGHT, WIDTH = real.shape 
     epsilon = torch.rand((BATCH_SIZE, 1, 1, 1)).repeat(1, CHANNELS, HEIGHT, WIDTH).to(device)
-    interpolted_images = real * epsilon + fake * (1- epsilon)
+    interpolated_images = real * epsilon + fake * (1 - epsilon)
 
     ## calculate critic scores 
     if mode == 'wgan':
-        mixed_scores = critic(interpolted_images)
+        mixed_scores = critic(interpolated_images)
     if mode == 'conditional':
-        mixed_scores = critic(interpolted_images, labels)
+        mixed_scores = critic(interpolated_images, labels)
 
     gradient = torch.autograd.grad(
-        input=interpolted_images,
+        input=interpolated_images,
         outputs=mixed_scores,
         grad_outputs=torch.ones_like(mixed_scores),
         create_graph=True,

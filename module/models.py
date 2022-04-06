@@ -268,7 +268,8 @@ class ConditionalDiscriminator(nn.Module):
                 kernel_size = 4, 
                 stride = 2, 
                 padding = 1, 
-                bias = False))
+                bias = False
+            ))
 
             layers.append(nn.BatchNorm2d(out_filters))
             layers.append(nn.LeakyReLU(0.2, inplace=True))
@@ -396,7 +397,7 @@ class SRDiscriminator(nn.Module):
         self.input_shape = input_shape
 
         in_channels, in_height, in_width = self.input_shape
-        patch_height, patch_width = int(in_height / 2 ** 4), int(in_width / 2 ** 4)
+        patch_height, patch_width = int((in_height / 2) ** 4), int((in_width / 2 )** 4)
 
         self.out_shape = (1, patch_height, patch_width)
 
@@ -497,4 +498,4 @@ def initialize_weights(model):
 
 ## TEST
 if __name__ == "__main__":
-    Critic(dim=64, img_channels=1)
+    ...
