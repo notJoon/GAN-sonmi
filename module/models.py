@@ -3,7 +3,7 @@ from typing import Any
 
 import torch
 import torch.nn as nn
-from layers import ResidualBlock
+from save_load import SaveLoadData
 
 #TODO implementing Conditional GAN 
 
@@ -48,15 +48,29 @@ from layers import ResidualBlock
        * the two models should always be at a similar skill level
 
 """
+def check_dim(dim: int, mode='normal') -> str:
+    modes = ['normal', 'z']
+    
+    if mode == modes[0]:
+        assert dim >= 1, f"dim size cannot be zero or negative. got={dim}"
+    else:
+        assert dim > 100, f"z_dim must greater or equal than 100. got={dim}"
+
+
+def check_channels(img_channels: int) -> str:
+    assert img_channels >= 1, f"img_channel must be 1(greyscale) or 3(RGB). got={img_channels}"
+
 ### DCGAN Layer ###
 class Generator(nn.Module):
     """ DCGAN Generator layer"""
+    __constants__ = ['dim', 'img_channels', 'z_dim']
+
     def __init__(self, dim: int, img_channels: int, z_dim=100) -> None:
         super(Generator, self).__init__()
-        
-        assert img_channels >= 1, f"img_channel must be 1(greyscale) or 3(RGB). got={img_channels}"
-        assert dim >= 1, f"dim size cannot be zero or negative. the minimum recommend value is 8, got={dim}"
-        assert z_dim >= 100, f"z_dim must greater or equal than 100. got={z_dim}"
+    
+        check_dim(dim)
+        check_dim(z_dim, mode='z')
+        check_channels(img_channels)
 
         self.channels = img_channels
         self.z_dim = z_dim 
@@ -108,14 +122,19 @@ class Generator(nn.Module):
 
     def forward(self, x):
         return self.models(x)
+    
+    def save(self):
+        SaveLoadData.save_model(self.models)
 
 
 class Discriminator(nn.Module):
-    def __init__(self, dim: int, img_channels: int) -> None:
+    __constants__ = ['dim, img_channels, filters']
+
+    def __init__(self, dim: int, img_channels: int, filters=64) -> None:
         super(Discriminator, self).__init__()
 
-        assert dim > 0, f'dim size must greater than 0. got={dim}'
-        assert img_channels >= 1, f"img_channel size must be 1(greyscale) or 3(RGB). got={img_channels}"
+        check_dim(dim)
+        check_channels(img_channels)
 
         self.channels = img_channels
 
@@ -134,9 +153,7 @@ class Discriminator(nn.Module):
             layers.append(nn.Dropout(0.5))
             return layers
 
-        # discriminator layers
-        filters: int = 64       # img_size
-
+        # discriminator layers    # img_size
         layers = []
         layers.append(nn.Conv2d(
             in_channels = self.channels, 
@@ -169,13 +186,19 @@ class Discriminator(nn.Module):
         #print(self.models)
     
     def forward(self, x):
-        output = self.models(x)
-        return output.squeeze()
+        models = self.models(x)
+        return models.squeeze()
+    
+    def save(self):
+        SaveLoadData.save_model(self.models)
+
 #####################################
 
 
 
 class ConditionalGenerator(nn.Module):    
+    __constants__ = ['dim', ' num_class', 'img_size', 'embed_size', 'img_channels', 'z_dim']
+
     def __init__(
         self, 
         dim: int, 
@@ -186,9 +209,9 @@ class ConditionalGenerator(nn.Module):
         z_dim=100) -> None:
 
         super(ConditionalGenerator, self).__init__()
-        assert img_channels >= 1, f"img_channel must be 1(greyscale) or 3(RGB). got={img_channels}"
-        assert dim >= 1, f"dim size cannot be zero or negative. the minimum recommend value is 8, got={dim}"
-        assert z_dim >= 100, f"z_dim must greater or equal than 100. got={z_dim}"
+        check_channels(img_channels)
+        check_dim(dim)
+        check_dim(z_dim, mode='z')
 
         self.img_size = img_size
         self.channels = img_channels
@@ -244,8 +267,13 @@ class ConditionalGenerator(nn.Module):
         embedding = self.embedding(labels).unsqueeze(2).unsqueeze(3)
         x = torch.cat([x, embedding], dim=1)
         return self.models(x)
+    
+    def save(self):
+        SaveLoadData.save_model(self.models)
 
 class ConditionalDiscriminator(nn.Module):
+    __constants__ = ['dim', 'img_channels', 'num_classes', 'img_size']
+
     def __init__(
         self, 
         dim: int, 
@@ -254,8 +282,8 @@ class ConditionalDiscriminator(nn.Module):
         img_size: int) -> None:
         super(ConditionalDiscriminator, self).__init__()
 
-        assert dim > 0, f'dim size must greater than 0. got={dim}'
-        assert img_channels >= 1, f"img_channel size must be 1(greyscale) or 3(RGB). got={img_channels}"
+        check_dim(dim)
+        check_channels(img_channels)
 
         self.channels = img_channels
         self.img_size = img_size
@@ -315,18 +343,22 @@ class ConditionalDiscriminator(nn.Module):
         embedding = self.embedding(labels).view(labels.shape[0], 1, self.img_size, self.img_size)
         x = torch.cat([x, embedding], dim=1) # N x C x img_size(H) x img_size(W)
         return self.models(x)
+    
+    def save(self):
+        SaveLoadData.save_model(self.models)
 
 
 
 ### WGAN-GP Layer ###
 class Critic(nn.Module):
     """ WGAN-GP Discriminator layer """
+    __constants__ = ['dim', 'img_channels']
 
     def __init__(self, dim: int, img_channels: int) -> None:
         super(Critic, self).__init__()
 
-        assert img_channels >= 1, f"img_channel size must be 1(greyscale) or 3(RGB). got={img_channels}"
-        assert dim >= 1, f"dim size cannot be zero or negative. the minimum recommend value is 8, got={dim}"
+        check_channels(img_channels)
+        check_dim(dim)
 
         self.img_channels = img_channels
 
@@ -384,118 +416,6 @@ class Critic(nn.Module):
 
     def forward(self, x):
         return self.model(x).squeeze()
-########################################
-
-
-
-
-## SRGAN 
-class SRDiscriminator(nn.Module):
-    def __init__(self, input_shape: int):
-        super(SRDiscriminator, self).__init__()
-
-        self.input_shape = input_shape
-
-        in_channels, in_height, in_width = self.input_shape
-        patch_height, patch_width = int((in_height / 2) ** 4), int((in_width / 2 )** 4)
-
-        self.out_shape = (1, patch_height, patch_width)
-
-        def _discriminator_block(in_filters: int, out_filters: int, first_block=False) -> list:
-            layers = []
-            layers.append(nn.Conv2d(in_filters, out_filters, kernel_size=3, stride=1, pading=1))
-
-            if not first_block:
-                layers.append(nn.BatchNorm2d(out_filters))
-            
-            layers.append(nn.LeakyReLU(0.2, inplace=True))
-
-            layers.append(nn.Conv2d(out_filters, out_filters, kernel_size=3, stride=2, padding=1))
-            layers.append(nn.BatchNorm2d(out_filters))
-            layers.append(nn.LeakyReLU(0.2, inplace=True))
-
-            return layers
-        
-        layers = []
-        in_filters = in_channels
-
-        for i, out_filters in enumerate([64, 128, 256, 512]):
-            layers.extend(_discriminator_block(in_filters, out_filters, firtst_block=(i == 0)))
-
-            in_filters = out_filters
-        
-        layers.append(nn.Conv2d(out_filters, 1, kernel_size=3, stride=1, padding=1))
-
-        self.model = nn.Sequential(*layers)
-
-    def forward(self, img):
-        return self.model(img)
-
-        
-class GeneratorResNet(nn.Module):
-    def __init__(
-        self, 
-        in_channels=3, 
-        out_channels=3, 
-        n_resnet_blocks=16) -> None:
-        super(GeneratorResNet, self).__init__()
-        
-        ### Layer 1 ###
-        self.conv1 = nn.Sequential(
-            nn.Conv2d(in_channels, 64, kernel_size=9, stride=1, padding=4),
-            nn.PReLU()
-        )
-
-        ## ResNet Block ## 
-        res_blocks = []
-
-        for _ in range(n_resnet_blocks):
-            res_blocks.append(ResidualBlock(64))
-        
-        self.res_blocks = nn.Sequential(*res_blocks)
-
-        ### Layer 2, post residual blocks ###
-        self.conv2 = nn.Sequential(
-            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(64, 0.8)
-        )
-
-        ## Upsampling
-        upsampling = []
-
-        for out_features in range(2):
-            upsampling += [
-                nn.Conv2d(64, 256, 3, 1, 1),
-                nn.BatchNorm2d(256),
-                nn.PixelShuffle(upscale_factor=2),
-                nn.PReLU()
-            ]
-        
-        self.upsampling = nn.Sequential(*upsampling)
-
-        ### output
-        self.conv3 = nn.Sequential(
-            nn.Conv2d(64, out_channels, kernel_size=9, stride=1, padding=4),
-            nn.Tanh()
-        )
-
-    def forward(self, x):
-        out1 = self.conv1(x)
-        out = self.res_blocks(out1)
-
-        out2 = self.conv2(out)
-        out = torch.add(out1, out2)
-
-        out = self.upsampling(out)
-        out = self.conv3(out)
-        return out 
-
-
-def initialize_weights(model):
-    for m in model.modules():
-        if isinstance(m, (nn.Conv2d, nn.ConvTranspose2d, nn.BatchNorm2d)):
-            nn.init.normal_(m.weight.data, 0.0, 0.02)
-
-## TEST
-if __name__ == "__main__":
-    ...
+    
+    def save(self):
+        SaveLoadData.save_model(self.models)

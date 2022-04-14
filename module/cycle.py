@@ -6,6 +6,8 @@ import torch
 import torch.nn as nn 
 
 class Block(nn.Module):
+    __constant__ = ['in_channels', 'out_channels', 'stride']
+
     def __init__(self, in_channels: int, out_channels: int, stride: int) -> None:
         super().__init__()
         self.conv = nn.Sequential(
@@ -26,6 +28,8 @@ class Block(nn.Module):
         return self.conv(x)
 
 class ConvBlock(nn.Module):
+    __constants__ = ['in_channels', 'out_channels']
+
     def __init__(self, in_channels: int, out_channels: int, 
                     down=True, use_activation=True, **kwargs: Any) -> None:
         super().__init__()
@@ -42,6 +46,8 @@ class ConvBlock(nn.Module):
         return self.conv(x)
 
 class ResidualBlock(nn.Module):
+    __constants__ = ['channels']
+
     def __init__(self, channels: int):
         super().__init__()
         self.block = nn.Sequential(
@@ -53,6 +59,8 @@ class ResidualBlock(nn.Module):
         return x + self.block(x)
 
 class CycleGenerator(nn.Module):
+    __constants__ = ['img_channels', 'num_features', 'num_residual']
+
     def __init__(self, img_channels: int, num_features=64, num_residual=9) -> None:
         super().__init__()
         self.initial = nn.Sequential(
@@ -87,9 +95,11 @@ class CycleGenerator(nn.Module):
         x = self.initial(x)
         for layer in self.down_blocks:
             x = layer(x)
+
         x = self.residual_blocks(x)
         for layer in self.up_block:
             x = layer(x)
+            
         return torch.tanh(self.last(x))
 
 
