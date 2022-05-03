@@ -1,5 +1,5 @@
 import pickle as pkl
-
+## TODO json file 
 class SaveLoadData:
     def __init__(self, model, filename: str) -> str:
         self.filname = 'saved_model.pkl'

@@ -120,7 +120,7 @@ class Generator(nn.Module):
 
         # print(self.models)
 
-    def forward(self, x):
+    def _forward(self, x):
         return self.models(x)
     
     def save(self):
@@ -185,7 +185,7 @@ class Discriminator(nn.Module):
         self.models = nn.Sequential(*layers)
         #print(self.models)
     
-    def forward(self, x):
+    def _forward(self, x):
         models = self.models(x)
         return models.squeeze()
     
@@ -262,7 +262,7 @@ class ConditionalGenerator(nn.Module):
 
         # print(self.models)
 
-    def forward(self, x, labels):
+    def _forward(self, x, labels):
         ## latent vector: N x noise_dim x 1 x1
         embedding = self.embedding(labels).unsqueeze(2).unsqueeze(3)
         x = torch.cat([x, embedding], dim=1)
@@ -339,7 +339,7 @@ class ConditionalDiscriminator(nn.Module):
         self.embedding = nn.Embedding(num_classes, img_size*img_size)
         #print(self.models)
     
-    def forward(self, x, labels):
+    def _forward(self, x, labels):
         embedding = self.embedding(labels).view(labels.shape[0], 1, self.img_size, self.img_size)
         x = torch.cat([x, embedding], dim=1) # N x C x img_size(H) x img_size(W)
         return self.models(x)
@@ -414,7 +414,7 @@ class Critic(nn.Module):
         
         #print(self.models)
 
-    def forward(self, x):
+    def _forward(self, x):
         return self.model(x).squeeze()
     
     def save(self):
