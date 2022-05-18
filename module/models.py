@@ -5,49 +5,6 @@ import torch
 import torch.nn as nn
 from save_load import SaveLoadData
 
-#TODO implementing Conditional GAN 
-
-""" Architectue
-
-    ### GAN ###
-
-        | real(x) | ───────────────────────────────x────────────────────────> | discriminator | ──> | output(y_hat) |
-                                                   │
-                                             | fake(x_hat) |
-                                                   │
-        | noise | ──────────>| generator |─────────┘
-            |
-            *
-  //  diverse representation  //
-  //  and also NOT real image //
-
-
-    ### discriminator ###
-         * learns to distinguish real from fake
-                                                                        ┌─────────── update(theta_d) ───────────┐
-                                                                        v                                       │
-        | noise | ──> | generator | ──> | features(x_hat) | ─x─> | discriminator | ──> | output(y_hat) | ──> | cost |
-                                                             │                                                  │
-                                                             │                                                  *
-                                                        | real(x) |                                 // Binary cross-entropy  //
-                                                                                                    // with labels real/fake //
-
-        ### generator ###
-         * learns to make fakes that look real
-         * take any random noise and produce a realistic image
-
-                           ┌─────────────────────────────── update(theta_g) ───────────────────────────────────┐
-                           V                                                                                   │                                                                 
-        | noise | ──> | generator | ──> | features(x_hat) | ──> | discriminator | ──> | output(y_hat) | ──> | cost |
-                                                │
-                                                *
-                                        //  only takes   //
-                                        // fake examples //
-
-       * they learn the competition with each other                                                         
-       * the two models should always be at a similar skill level
-
-"""
 def check_dim(dim: int, mode='normal') -> str:
     modes = ['normal', 'z']
     
