@@ -5,3 +5,5 @@ __pycache__
 .pyc
 /preview
 dataset
+settings.json
+data/test
