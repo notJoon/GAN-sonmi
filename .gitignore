@@ -7,3 +7,8 @@ __pycache__
 dataset
 settings.json
 data/test
+todo.txt
+src/starGAN_v2
+src/styleGAN
+src/Tools/image.ipynb
+download.sh

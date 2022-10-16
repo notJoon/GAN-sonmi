@@ -7,13 +7,13 @@ import torch.nn as nn
 class BasicGenerator(nn.Module):
     __constants__ = ['dim', 'img_channels', 'z_dim']
 
-    def __init__(self, dim: int) -> None:
+    def __init__(self, dim=16) -> None:
         self.channels = 1
         self.dim = dim
         self.z_dim = 100 
     
     def build_layers(
-        self, in_filters:int, out_filters:int, first_block:bool
+        self, in_filters: int, out_filters: int, first_block: bool
         ) -> List[nn.Module]:
 
         layers = []
@@ -54,14 +54,11 @@ class BasicGenerator(nn.Module):
 
     def forward(self, x) -> torch.Tensor:
         return self.build_model(x)
-    
-    #TODO make save and load model parameter method
-
 
 class BasicDiscriminator(nn.Module):
     __constants__ = ['dim, img_channels, filters']
 
-    def __init__(self, dim: int) -> None:
+    def __init__(self, dim=16) -> None:
         super(BasicDiscriminator, self).__init__()
         self.channels = 1
         self.filters = 64
@@ -116,9 +113,7 @@ class BasicDiscriminator(nn.Module):
         models = self.build_model(x)
         return models.squeeze()  
 
-
 #TODO build conditional GAN 
-
 if __name__ == '__main__':
     disc = BasicDiscriminator(32)
     model = disc.build_model()
