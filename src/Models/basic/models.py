@@ -115,6 +115,6 @@ class BasicDiscriminator(nn.Module):
 
 #TODO build conditional GAN 
 if __name__ == '__main__':
-    disc = BasicDiscriminator(32)
+    disc = BasicDiscriminator(96)
     model = disc.build_model()
     print(model)
