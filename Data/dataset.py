@@ -1,5 +1,9 @@
 import torch 
 from torch.utils.data import Dataset, DataLoader
+import torchvision
+import torchvision.transforms as transforms
+
+import matplotlib.pyplot as plt
 
 PATH = r'...'
 
@@ -19,13 +23,26 @@ class ImageDataset(Dataset):
 
         return img 
 
-"""
 BATCH = 32
-transforms = transforms.Compose([
+tf = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Normalize((0.5, ), (0.5, ))
+    transforms.Normalize((0.5,), (0.5,)),
 ])
+
+# dataset = MalnyeonDataset(load_data)
+# dataloader = DataLoader(
+#     dataset=dataset,
+#     batch_size=BATCH_SIZE,
+#     shuffle=True,
+# )
+
+# for data in dataloader:
+#     img = data
+#     plt.imshow(
+#         torchvision.utils.make_grid(img, normalize=True).permute(1, 2, 0),
+#         interpolation="bicubic",
+#     )
+#     plt.show()
 
 dataset = ImageDataset(PATH, transforms=transforms)
 dataloader = DataLoader(dataset, batch_size=BATCH, shuffle=True)
-"""

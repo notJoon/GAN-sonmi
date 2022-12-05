@@ -12,3 +12,4 @@ src/starGAN_v2
 src/styleGAN
 src/Tools/image.ipynb
 download.sh
+setings.json
